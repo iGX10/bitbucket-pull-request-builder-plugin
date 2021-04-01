@@ -76,8 +76,8 @@ The different valid action types that can be used for the time being are :
   stage 'Decline Pull Request'
     steps
     bitbucketPullRequestBuilder(
-          credentialsId: "your-credentials-id"
-          actionType: "decline"
+          credentialsId: "your-credentials-id",
+          actionType: "decline",
           pullRequestId: env.BITBUCKET_PULL_REQUEST_ID,
           pullRequestLink: env.BITBUCKET_PULL_REQUEST_LINK       
         )
