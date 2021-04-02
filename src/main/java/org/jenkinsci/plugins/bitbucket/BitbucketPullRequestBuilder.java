@@ -43,6 +43,9 @@ import java.util.List;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.bitbucket.api.BitbucketApi;
+import org.jenkinsci.plugins.bitbucket.constantes.Endpoints;
+import org.jenkinsci.plugins.bitbucket.services.AuthService;
+import org.jenkinsci.plugins.bitbucket.services.BitbucketFactory;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -130,7 +133,7 @@ public class BitbucketPullRequestBuilder extends Notifier {
 
         public ListBoxModel doFillGlobalCredentialsIdItems() {
             Job owner = null;
-            List<DomainRequirement> apiEndpoint = URIRequirementBuilder.fromUri(BitbucketApi.OAUTH_ENDPOINT).build();
+            List<DomainRequirement> apiEndpoint = URIRequirementBuilder.fromUri(Endpoints.BITBUCKET_OAUTH_ENDPOINT).build();
 
             return new StandardUsernameListBoxModel()
                     .withEmptySelection()
@@ -142,14 +145,13 @@ public class BitbucketPullRequestBuilder extends Notifier {
                 return FormValidation.ok();
             }
             Job owner = null;
-            UsernamePasswordCredentials credentials = BitbucketHelper.getCredentials(globalCredentialsId, owner);
-
-            return this.checkCredentials(credentials);
+            return this.checkCredentials(globalCredentialsId, owner);
         }
 
-        private FormValidation checkCredentials(UsernamePasswordCredentials credentials) {
+        private FormValidation checkCredentials(String globalCredentialsId,Job owner) {
             try {
-                Token token = BitbucketHelper.getToken(credentials);
+                AuthService authService = BitbucketFactory.getInstance().getAuthService();
+                Token token = authService.getToken(globalCredentialsId, owner);
 
                 if (token.isEmpty()) {
                     return FormValidation.error("Invalid Bitbucket OAuth credentials");

@@ -24,7 +24,6 @@
 
 package org.jenkinsci.plugins.bitbucket;
 
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.inject.Inject;
 
 import hudson.Extension;
@@ -39,6 +38,10 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 import org.jenkinsci.plugins.bitbucket.Exceptions.BitbucketPullRequestBuilderException;
+import org.jenkinsci.plugins.bitbucket.constantes.Messages;
+import org.jenkinsci.plugins.bitbucket.services.BitbucketFactory;
+import org.jenkinsci.plugins.bitbucket.services.PullRequestService;
+import org.jenkinsci.plugins.bitbucket.utils.BitbucketHelper;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -46,7 +49,6 @@ import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepEx
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.scribe.model.Token;
 
 public class BitbucketPullRequestBuilderStep extends AbstractStepImpl {
 
@@ -76,11 +78,16 @@ public class BitbucketPullRequestBuilderStep extends AbstractStepImpl {
         this.pullRequestId = pullRequestId;
     }
 
+    private String message;
+    public String getMessage() { return this.message; }
+    @DataBoundSetter public void setMessage(String message) {
+        this.message = message;
+    }
+
     @DataBoundConstructor
     public BitbucketPullRequestBuilderStep() {
 
     }
-
     @Override
     public DescriptorImpl getDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
@@ -129,6 +136,7 @@ public class BitbucketPullRequestBuilderStep extends AbstractStepImpl {
         @StepContextParameter
         private transient TaskListener taskListener;
 
+
         @Inject
         private transient BitbucketPullRequestBuilderStep step;
 
@@ -146,40 +154,26 @@ public class BitbucketPullRequestBuilderStep extends AbstractStepImpl {
         @Override
         public Void run() throws BitbucketPullRequestBuilderException, IOException {
             this.readGlobalConfiguration();
+            PullRequestService pullRequestService = BitbucketFactory.getInstance().getPullRequestService();
 
             String credentialsId = step.getCredentialsId()==null ? step.getDescriptor().getGlobalCredentialsId() :  step.getCredentialsId() ;
             String pullRequestLink = step.getPullRequestLink();
             String pullRequestId = step.getPullRequestId();
-            String actionType=step.getActionType();
+            String actionType = step.getActionType() != null ? step.getActionType() : "";
+            String message = step.getMessage() != null ? step.getMessage() : "";
+            String workspace_repo = BitbucketHelper.getWorkspaceAndRepoName(pullRequestLink);
+
             switch (actionType.toLowerCase()){
                 case "decline":
-                    {   bitbucketPullRequestDecline(credentialsId, pullRequestLink, pullRequestId);
+                    {
+                        pullRequestService.decline(credentialsId, workspace_repo, pullRequestId, message);
+                        taskListener.getLogger().println("Pull-request with ID " + pullRequestId + " was declined");
                         break;
                     }
-                default: throw new BitbucketPullRequestBuilderException("Non valid Action Type !!! please refer to the documentation");
+                default: throw new BitbucketPullRequestBuilderException(Messages.MESSAGE_NO_VALID_ACTION_TYPE);
             }
-
 
             return null;
-        }
-
-        private void bitbucketPullRequestDecline(String credentialsId, String pullRequestLink, String pullRequestId) throws IOException {
-            if(credentialsId !=""){
-                StandardUsernamePasswordCredentials credentials = BitbucketHelper.getCredentials(credentialsId, null);
-                Token token = BitbucketHelper.getToken(credentials);
-                if(!token.isEmpty()){
-                    String tokenStr = token.getToken();
-                    String workspace_repo = BitbucketHelper.getWorkspaceAndRepoName(pullRequestLink);
-                    if(BitbucketHelper.declinePullRequest(tokenStr, workspace_repo, pullRequestId)) {
-                        taskListener.getLogger().println("Pull-request with ID "+ pullRequestId +" was declined");
-                    }
-                    else throw new BitbucketPullRequestBuilderException("Pull-request was not declined !! an error has occurred.");
-                }
-                else {
-                    throw new BitbucketPullRequestBuilderException("An ERROR has occurred!!! Invalid Bitbucket OAuth credentials. The TOKEN is empty.");
-                }
-            }
-            else throw new BitbucketPullRequestBuilderException("Jenkins Credentials ID is empty.");
         }
     }
 }

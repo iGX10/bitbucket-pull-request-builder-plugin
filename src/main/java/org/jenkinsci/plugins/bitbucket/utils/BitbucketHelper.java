@@ -22,41 +22,12 @@
  * THE SOFTWARE.
  */
 
-package org.jenkinsci.plugins.bitbucket.api;
+package org.jenkinsci.plugins.bitbucket.utils;
 
-import org.jenkinsci.plugins.bitbucket.constantes.Endpoints;
-import org.scribe.builder.api.DefaultApi20;
-import org.scribe.extractors.AccessTokenExtractor;
-import org.scribe.extractors.JsonTokenExtractor;
-import org.scribe.model.OAuthConfig;
-import org.scribe.model.Verb;
-import org.scribe.oauth.OAuthService;
+public class BitbucketHelper {
 
-public class BitbucketApi extends DefaultApi20 {
-
-
-    @Override
-    public String getAccessTokenEndpoint() {
-        return Endpoints.BITBUCKET_OAUTH_ENDPOINT + "access_token";
-    }
-
-    @Override
-    public String getAuthorizationUrl(OAuthConfig config) {
-        return Endpoints.BITBUCKET_OAUTH_ENDPOINT + "authorize";
-    }
-
-    @Override
-    public Verb getAccessTokenVerb() {
-        return Verb.POST;
-    }
-
-    @Override
-    public AccessTokenExtractor getAccessTokenExtractor() {
-        return new JsonTokenExtractor();
-    }
-
-    @Override
-    public OAuthService createService(OAuthConfig config) {
-        return new BitbucketApiService(this, config);
+    public static String getWorkspaceAndRepoName(String pr_link) {
+        String[] tab = pr_link.split("/");
+        return tab[3] + "/" + tab[4];
     }
 }
