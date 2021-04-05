@@ -79,11 +79,26 @@ The different valid action types that can be used for the time being are :
           credentialsId: "your-credentials-id",
           actionType: "decline",
           pullRequestId: env.BITBUCKET_PULL_REQUEST_ID,
-          pullRequestLink: env.BITBUCKET_PULL_REQUEST_LINK       
+          pullRequestLink: env.BITBUCKET_PULL_REQUEST_LINK,
+          message : 'Your message'       
         )
   ...
 ```
+* `approve`
 
+
+```groovy
+  ...
+  stage 'Approve Pull Request'
+    steps
+    bitbucketPullRequestBuilder(
+          credentialsId: "your-credentials-id",
+          actionType: "approve",
+          pullRequestId: env.BITBUCKET_PULL_REQUEST_ID,
+          pullRequestLink: env.BITBUCKET_PULL_REQUEST_LINK,  
+        )
+  ...
+```
 
 Notes : 
 
@@ -98,9 +113,10 @@ Parameter:
 | Name | Type | Optional | Description |
 | --- | --- | --- | --- |
 | `credentialsId` | String | yes | The jenkins credential id
-| `actionType` | String | no | The action to perform. (IT CAN ONLY TAKE `decline` FOR NOW! more can be added in future updates, like `approve`, `merge`)
+| `actionType` | String | no | The action to perform. (IT CAN ONLY TAKE `decline` and `approve` FOR NOW! more can be added in future updates, like  `merge`)
 | `pullRequestId` | String | no | The id identifying the pull request
 | `pullRequestLink` | String | no | The link of the pull request (used to extract the workspace/repository names)
+| `message` | String | yes | The message to define the reason why you declined the Pull Request
 
 ## Contributions
 
