@@ -170,6 +170,12 @@ public class BitbucketPullRequestBuilderStep extends AbstractStepImpl {
                         taskListener.getLogger().println("Pull-request with ID " + pullRequestId + " was declined");
                         break;
                     }
+                case "approve":
+                    {
+                        pullRequestService.approve(credentialsId, workspace_repo, pullRequestId);
+                        taskListener.getLogger().println("Pull-request with ID " + pullRequestId + " was approved");
+                        break;
+                    }
                 default: throw new BitbucketPullRequestBuilderException(Messages.MESSAGE_NO_VALID_ACTION_TYPE);
             }
 
